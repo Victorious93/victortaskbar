@@ -39,5 +39,11 @@ signature and installs over the previous one. **This is a debug key only.** No r
 
 No accessibility service is used.
 
+## Victorious fleet
+
+- Monorepo: [https://github.com/Victorious93/victorious-fleet](https://github.com/Victorious93/victorious-fleet) *(not yet a submodule)*
+- Status: [fleet-manifest ROADMAP](https://github.com/Victorious93/fleet-manifest/blob/main/ROADMAP.md)
+- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
+
 ## License
 All rights reserved, Don Victor. See [LICENSE](LICENSE).
