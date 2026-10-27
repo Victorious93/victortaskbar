@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/victortaskbar-logo.png" alt="VictorTaskbar logo" width="220">
+</p>
+
 # VictorTaskbar
 
 A desktop-style taskbar for Android: a bar along the bottom of the screen, drawn over other apps,
