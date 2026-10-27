@@ -25,3 +25,8 @@
 ## Phase 5 — Release
 - [ ] Release signing via CI secrets (never committed)
 - [ ] App icon/branding, store listing
+
+## Fleet theme
+- [x] Read-only FleetThemeClient (provider query, observer, change broadcast, package+cert pin, neon fallback)
+- [ ] Get VictorTaskbar added to VictorLaunch FleetPins.KNOWN and verify on a device
+- [ ] Release-cert pin once release signing exists

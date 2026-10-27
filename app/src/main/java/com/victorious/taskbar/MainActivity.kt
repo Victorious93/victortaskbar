@@ -22,13 +22,19 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.victorious.taskbar.service.TaskbarService
 import com.victorious.taskbar.ui.NeonCyan
 import com.victorious.taskbar.ui.NeonMagenta
+import com.victorious.taskbar.ui.Muted
+import com.victorious.taskbar.ui.OnBar
+import com.victorious.taskbar.theme.FleetThemeClient
+import com.victorious.taskbar.theme.TaskbarTheme
+import com.victorious.taskbar.theme.ThemeSource
 
 class MainActivity : ComponentActivity() {
     private val notifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { MaterialTheme(colorScheme = darkColorScheme(primary = NeonCyan, secondary = NeonMagenta)) { Home() } }
+        FleetThemeClient.start(this)
+        setContent { TaskbarTheme { Home() } }
     }
 
     @Composable
@@ -39,6 +45,7 @@ class MainActivity : ComponentActivity() {
         DisposableEffect(owner) {
             val obs = LifecycleEventObserver { _, e ->
                 if (e == Lifecycle.Event.ON_RESUME) {
+                    FleetThemeClient.refresh(this@MainActivity)
                     overlayOk = Permissions.canDrawOverlays(this@MainActivity)
                     usageOk = Permissions.hasUsageAccess(this@MainActivity)
                 }
@@ -47,10 +54,16 @@ class MainActivity : ComponentActivity() {
             onDispose { owner.lifecycle.removeObserver(obs) }
         }
         Column(
-            Modifier.fillMaxSize().background(Color(0xFF0A0A1A)).verticalScroll(rememberScrollState()).padding(24.dp),
+            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("VictorTaskbar", color = NeonCyan, fontSize = 28.sp)
+            val theme by FleetThemeClient.state.collectAsState()
+            Text(
+                if (theme.source == ThemeSource.FLEET) "Theme: fleet (${theme.mode ?: "?"}) from VictorLaunch"
+                else "Theme: built-in neon — ${theme.fallbackReason ?: "fleet theme unavailable"}",
+                color = Muted,
+            )
             ConsentCard(
                 title = "1. Display over other apps (required)",
                 body = "VictorTaskbar draws a taskbar at the bottom of your screen on top of other apps. " +
@@ -76,17 +89,17 @@ class MainActivity : ComponentActivity() {
             }
             Text(
                 "Tip: open the start menu (◎) to search apps. Tap Pin/Unpin or long-press an app to change pinned apps.",
-                color = Color.LightGray,
+                color = Muted,
             )
         }
     }
 
     @Composable
     private fun ConsentCard(title: String, body: String, granted: Boolean, button: String, onClick: () -> Unit) {
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF16162A))) {
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(title, color = Color.White, fontSize = 18.sp)
-                Text(body, color = Color.LightGray)
+                Text(title, color = OnBar, fontSize = 18.sp)
+                Text(body, color = Muted)
                 if (granted) Text("✓ Granted", color = NeonCyan)
                 else Button(onClick = onClick) { Text(button) }
             }
