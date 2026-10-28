@@ -17,6 +17,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.ReadOnlyComposable
+import com.victorious.taskbar.theme.LocalFleetPalette
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -30,9 +32,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-val NeonCyan = Color(0xFF00E5FF)
-val NeonMagenta = Color(0xFFFF2BD6)
-val BarBg = Color(0xE60A0A1A)
+// Colors follow the live fleet theme (VictorLaunch) or the built-in neon fallback.
+val NeonCyan: Color @Composable @ReadOnlyComposable get() = Color(LocalFleetPalette.current.primary)
+val NeonMagenta: Color @Composable @ReadOnlyComposable get() = Color(LocalFleetPalette.current.secondary)
+val BarBg: Color @Composable @ReadOnlyComposable get() = Color(LocalFleetPalette.current.tile)
+val OnBar: Color @Composable @ReadOnlyComposable get() = Color(LocalFleetPalette.current.onBackground)
+val Muted: Color @Composable @ReadOnlyComposable get() = Color(LocalFleetPalette.current.muted)
 
 @Composable
 fun AppIcon(app: AppEntry, size: Int = 36) {
@@ -57,12 +62,12 @@ fun TaskbarBar(
                 Brush.linearGradient(listOf(NeonCyan, NeonMagenta)), RoundedCornerShape(20.dp)
             ).clickable { onStart() },
             contentAlignment = Alignment.Center,
-        ) { Text("◎", color = Color.White, fontSize = 20.sp) }
+        ) { Text("◎", color = OnBar, fontSize = 20.sp) }
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             pinned.forEach { app -> Box(Modifier.clickable { onLaunch(app.packageName) }) { AppIcon(app) } }
             if (pinned.isNotEmpty() && recent.isNotEmpty()) {
-                Box(Modifier.width(1.dp).height(32.dp).background(Color.Gray))
+                Box(Modifier.width(1.dp).height(32.dp).background(Muted))
             }
             recent.filter { r -> pinned.none { it.packageName == r.packageName } }.forEach { app ->
                 Box(Modifier.clickable { onLaunch(app.packageName) }) { AppIcon(app, 32) }
@@ -89,7 +94,7 @@ fun Tray() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(battery, color = NeonCyan, fontSize = 13.sp)
         Spacer(Modifier.width(10.dp))
-        Text(time, color = Color.White, fontSize = 15.sp)
+        Text(time, color = OnBar, fontSize = 15.sp)
     }
 }
 
@@ -124,7 +129,7 @@ fun StartMenu(
             value = query, onValueChange = { query = it }, singleLine = true,
             placeholder = { Text("Search apps") }, modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                focusedTextColor = OnBar, unfocusedTextColor = OnBar,
                 focusedBorderColor = NeonCyan, unfocusedBorderColor = NeonMagenta,
             ),
         )
@@ -140,7 +145,7 @@ fun StartMenu(
                 ) {
                     AppIcon(app, 28)
                     Spacer(Modifier.width(10.dp))
-                    Text(app.label, color = Color.White, modifier = Modifier.weight(1f))
+                    Text(app.label, color = OnBar, modifier = Modifier.weight(1f))
                     TextButton(onClick = { onTogglePin(app.packageName) }) {
                         Text(if (app.packageName in pinned) "Unpin" else "Pin", color = NeonCyan)
                     }

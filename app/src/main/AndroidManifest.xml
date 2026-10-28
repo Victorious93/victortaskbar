@@ -16,6 +16,9 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Fleet theme provider (VictorLaunch), read-only -->
+        <package android:name="com.victorious.launch" />
+        <provider android:authorities="com.victorious.launch.theme" />
     </queries>
 
     <application
@@ -41,5 +44,15 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Draws a user-enabled desktop-style taskbar overlay" />
         </service>
+
+        <!-- Exported: VictorLaunch sends this explicitly (setPackage) and is signed with a different key.
+             Wake-up only; extras are ignored and the provider is re-queried with its package+cert pin checked. -->
+        <receiver
+            android:name=".theme.FleetThemeChangedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.victorious.launch.action.FLEET_THEME_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

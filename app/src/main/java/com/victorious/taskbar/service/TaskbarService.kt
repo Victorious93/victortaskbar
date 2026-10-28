@@ -29,6 +29,8 @@ import com.victorious.taskbar.data.AppRepository
 import com.victorious.taskbar.data.PinnedAppsStore
 import com.victorious.taskbar.ui.StartMenu
 import com.victorious.taskbar.ui.TaskbarBar
+import com.victorious.taskbar.theme.FleetThemeClient
+import com.victorious.taskbar.theme.TaskbarTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -45,6 +47,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
         savedStateController.performRestore(null)
         super.onCreate()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        FleetThemeClient.start(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -92,7 +95,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
             setViewTreeLifecycleOwner(this@TaskbarService)
             setViewTreeSavedStateRegistryOwner(this@TaskbarService)
         }
-        v.setContent {
+        v.setContent { TaskbarTheme {
             var menuOpen by remember { mutableStateOf(false) }
             var allApps by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
             var recent by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
@@ -122,7 +125,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                 )
                 TaskbarBar(pinned, recent, onStart = { menuOpen = !menuOpen }, onLaunch = launch)
             }
-        }
+        } }
         wm.addView(v, overlayParams(focusable = false))
         view = v
     }
