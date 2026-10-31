@@ -7,7 +7,17 @@
 A desktop-style taskbar for Android: a bar along the bottom of the screen, drawn over other apps,
 with a start menu, pinned apps, recent apps, a clock and a battery indicator.
 
-Status: MVP scaffold (v0.1.0). See [ROADMAP.md](ROADMAP.md) and [MANUAL.md](MANUAL.md).
+Status: v0.2.0. Not yet tested on a physical device.
+
+## Features
+- Start menu: fuzzy search (Enter opens top hit), grid or A–Z list, Pinned/Recent sections
+- Long-press any app: open, split screen, floating window, pin/unpin, reorder, app info, **uninstall**
+- Quick panel (tap the clock): Internet & Bluetooth panels, torch, volume/mute, media controls, battery temp
+- Bar: top or bottom, 3 sizes, opacity, hide to a small handle, Home button, battery gauge, 12/24h clock with optional seconds/date
+- Back or tapping outside closes menus; notification has Show/hide and Stop
+- Optional start on boot
+
+ See [ROADMAP.md](ROADMAP.md) and [MANUAL.md](MANUAL.md).
 
 ## Tech
 - Kotlin + Jetpack Compose, package `com.victorious.taskbar`
@@ -36,6 +46,8 @@ signature and installs over the previous one. **This is a debug key only.** No r
 | `FOREGROUND_SERVICE` (+ `SPECIAL_USE`) | Keep the taskbar alive | Automatic; shows an ongoing notification |
 | `POST_NOTIFICATIONS` | Show that ongoing notification on Android 13+ | Runtime prompt on Start |
 | `QUERY_ALL_PACKAGES` | List launchable apps in the start menu | Install-time |
+| `REQUEST_DELETE_PACKAGES` | Show Android's uninstall dialog from the long-press menu | Install-time; Android still asks you to confirm |
+| `RECEIVE_BOOT_COMPLETED` | Optional "Start on boot" | Install-time; does nothing unless you turn the setting on |
 
 No accessibility service is used.
 

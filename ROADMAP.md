@@ -10,12 +10,12 @@
 - [x] CI building a debug APK
 
 ## Phase 2 — Windowing
-- [ ] Freeform window launch (`ActivityOptions.setLaunchBounds`) — stub in `stubs/FutureFeatures.kt`
-- [ ] Split-screen launch (`FLAG_ACTIVITY_LAUNCH_ADJACENT`)
-- [ ] Taskbar position/size/auto-hide settings
+- [x] Freeform window launch (`ActivityOptions.setLaunchBounds`; only applied when freeform is enabled)
+- [x] Split-screen launch (`FLAG_ACTIVITY_LAUNCH_ADJACENT`)
+- [x] Taskbar position (top/bottom), size, opacity, hide-to-handle
 
 ## Phase 3 — Tray
-- [ ] Quick toggles (Wi-Fi, Bluetooth, brightness, volume)
+- [x] Quick panel: Internet/Bluetooth panels, torch, volume, media keys, display/battery shortcuts (brightness slider not done: needs WRITE_SETTINGS)
 - [ ] Notification icons via NotificationListenerService (own consent screen)
 
 ## Phase 4 — Power features
