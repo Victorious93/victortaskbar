@@ -37,6 +37,7 @@ import com.victorious.taskbar.data.LaunchMode
 import com.victorious.taskbar.data.TaskbarPrefs
 import com.victorious.taskbar.data.TaskbarSettings
 import com.victorious.taskbar.service.TaskbarService
+import com.victorious.taskbar.notify.TrayNotificationListener
 import com.victorious.taskbar.theme.FleetThemeClient
 import com.victorious.taskbar.theme.TaskbarTheme
 import com.victorious.taskbar.theme.ThemeSource
@@ -70,6 +71,7 @@ class MainActivity : ComponentActivity() {
     private fun Home() {
         var overlayOk by remember { mutableStateOf(Permissions.canDrawOverlays(this)) }
         var usageOk by remember { mutableStateOf(Permissions.hasUsageAccess(this)) }
+        var notifOk by remember { mutableStateOf(TrayNotificationListener.hasAccess(this)) }
         val running by TaskbarService.running.collectAsState()
         val prefs by settings.prefs.collectAsState(initial = TaskbarPrefs())
         val theme by FleetThemeClient.state.collectAsState()
@@ -80,6 +82,7 @@ class MainActivity : ComponentActivity() {
                     FleetThemeClient.refresh(this@MainActivity)
                     overlayOk = Permissions.canDrawOverlays(this@MainActivity)
                     usageOk = Permissions.hasUsageAccess(this@MainActivity)
+                    notifOk = TrayNotificationListener.hasAccess(this@MainActivity)
                 }
             }
             owner.lifecycle.addObserver(obs)
@@ -121,7 +124,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            if (!overlayOk || !usageOk) Card("Setup") {
+            if (!overlayOk || !usageOk || !notifOk) Card("Setup") {
                 Step(
                     "Display over other apps", "Required. Lets the taskbar draw on top of apps. It never reads screen content or typing.",
                     overlayOk, "Allow",
@@ -130,6 +133,11 @@ class MainActivity : ComponentActivity() {
                     "Usage access", "Optional. Shows your recently used apps on the bar. Stays on this device.",
                     usageOk, "Allow",
                 ) { startActivity(Permissions.usageSettingsIntent()) }
+                Step(
+                    "Notification access", "Optional. Shows notification icons, unread dots and a notification list on the bar. " +
+                        "Read on this device only; never stored or uploaded.",
+                    notifOk, "Allow",
+                ) { startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
             }
 
             Card("Look") {
@@ -147,6 +155,8 @@ class MainActivity : ComponentActivity() {
                 Toggle("Show seconds", null, prefs.showSeconds) { v -> update { it.copy(showSeconds = v) } }
                 Toggle("Show date", "Under the clock (Normal and Large sizes)", prefs.showDate) { v -> update { it.copy(showDate = v) } }
                 Toggle("Battery percentage", null, prefs.showBatteryPercent) { v -> update { it.copy(showBatteryPercent = v) } }
+                Toggle("Notifications on the bar", if (notifOk) "Icons, count and unread dots" else "Needs notification access (see Setup)",
+                    prefs.showNotifications) { v -> update { it.copy(showNotifications = v) } }
             }
 
             Card("Behaviour") {
@@ -167,6 +177,7 @@ class MainActivity : ComponentActivity() {
                 Tip("☰ Start", "Search apps (fuzzy: \"gm\" finds Google Maps). Enter opens the top result.")
                 Tip("Long-press any app", "Pin/unpin, reorder, split screen, floating window, app info, uninstall.")
                 Tip("Tap the clock", "Quick panel: Wi-Fi/Internet, Bluetooth, torch, volume, media controls.")
+                Tip("Notification chip", "Tap the icons + count next to the clock to read, open or dismiss notifications.")
                 Tip("⌄ Hide", "Collapses the bar to a small handle. The notification also has Show / hide.")
                 Tip("Back / tap outside", "Closes any open menu.")
             }

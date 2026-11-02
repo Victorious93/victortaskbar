@@ -53,6 +53,7 @@ import com.victorious.taskbar.data.BatteryInfo
 import com.victorious.taskbar.data.IconCache
 import com.victorious.taskbar.data.TaskbarLogic
 import com.victorious.taskbar.data.TaskbarPrefs
+import com.victorious.taskbar.notify.TrayNotification
 import com.victorious.taskbar.theme.LocalFleetPalette
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -74,6 +75,7 @@ sealed interface Popup {
     data object None : Popup
     data object Start : Popup
     data object Quick : Popup
+    data object Notifications : Popup
     data class AppMenu(val app: AppEntry) : Popup
 }
 
@@ -93,12 +95,16 @@ fun TaskbarBar(
     recent: List<AppEntry>,
     popup: Popup,
     battery: BatteryInfo,
+    notifApps: List<AppEntry>,
+    notifCount: Int,
+    unreadPkgs: Set<String>,
     onStart: () -> Unit,
     onHome: () -> Unit,
     onLaunch: (AppEntry) -> Unit,
     onAppMenu: (AppEntry) -> Unit,
     onTray: () -> Unit,
     onCollapse: () -> Unit,
+    onNotifications: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val size = prefs.size
@@ -131,6 +137,7 @@ fun TaskbarBar(
         ) {
             pinned.forEach { app ->
                 BarApp(app, size.iconDp, highlighted = (popup as? Popup.AppMenu)?.app?.packageName == app.packageName,
+                    unread = app.packageName in unreadPkgs,
                     onClick = { onLaunch(app) },
                     onLongClick = { if (prefs.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAppMenu(app) })
             }
@@ -139,13 +146,16 @@ fun TaskbarBar(
                 Box(Modifier.padding(horizontal = 4.dp).width(1.dp).height((size.iconDp - 6).dp).background(Muted.copy(alpha = 0.6f)))
             }
             extra.forEach { app ->
-                BarApp(app, size.iconDp - 4, highlighted = false, dim = true,
+                BarApp(app, size.iconDp - 4, highlighted = false, dim = true, unread = app.packageName in unreadPkgs,
                     onClick = { onLaunch(app) },
                     onLongClick = { if (prefs.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAppMenu(app) })
             }
             if (pinned.isEmpty() && extra.isEmpty()) {
                 Text("Long-press an app in the start menu to pin it", color = Muted, fontSize = 12.sp, maxLines = 1)
             }
+        }
+        if (prefs.showNotifications && notifCount > 0) {
+            NotificationChip(notifApps, notifCount, active = popup == Popup.Notifications, onClick = onNotifications)
         }
         Tray(prefs, battery, active = popup == Popup.Quick, onClick = onTray)
         BarIconButton(
@@ -165,7 +175,7 @@ private fun BarIconButton(icon: ImageVector, desc: String, iconDp: Int, onClick:
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun BarApp(app: AppEntry, iconDp: Int, highlighted: Boolean, dim: Boolean = false, onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun BarApp(app: AppEntry, iconDp: Int, highlighted: Boolean, dim: Boolean = false, unread: Boolean = false, onClick: () -> Unit, onLongClick: () -> Unit) {
     Box(
         Modifier.clip(RoundedCornerShape(10.dp))
             .background(if (highlighted) NeonCyan.copy(alpha = 0.18f) else Color.Transparent)
@@ -174,6 +184,10 @@ private fun BarApp(app: AppEntry, iconDp: Int, highlighted: Boolean, dim: Boolea
         contentAlignment = Alignment.Center,
     ) {
         Box(Modifier.graphicsLayer { alpha = if (dim) 0.8f else 1f }) { AppIcon(app, iconDp) }
+        if (unread) Box(
+            Modifier.align(Alignment.TopEnd).size(9.dp).clip(CircleShape).background(NeonMagenta)
+                .border(1.5.dp, BarBg, CircleShape)
+        )
     }
 }
 
@@ -560,4 +574,74 @@ private fun RoundBtn(icon: ImageVector, desc: String, big: Boolean = false, onCl
             .background(if (big) NeonCyan else Muted.copy(alpha = 0.15f)).clickable { onClick() },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, desc, tint = if (big) Color.Black else OnBar) }
+}
+
+// ---------------------------------------------------------------- notifications
+
+@Composable
+fun NotificationChip(apps: List<AppEntry>, count: Int, active: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.padding(end = 4.dp).clip(RoundedCornerShape(10.dp))
+            .background(if (active) NeonCyan.copy(alpha = 0.18f) else Color.Transparent)
+            .clickable { onClick() }.padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        apps.take(3).forEach { AppIcon(it, 18); Spacer(Modifier.width(2.dp)) }
+        Box(
+            Modifier.padding(start = 2.dp).clip(RoundedCornerShape(8.dp)).background(NeonMagenta).padding(horizontal = 6.dp, vertical = 1.dp)
+        ) { Text(if (count > 99) "99+" else "$count", color = Color.Black, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+fun NotificationPanel(
+    items: List<TrayNotification>,
+    appFor: (String) -> AppEntry?,
+    onOpen: (TrayNotification) -> Unit,
+    onDismiss: (TrayNotification) -> Unit,
+    onClearAll: () -> Unit,
+) {
+    val screenH = LocalConfiguration.current.screenHeightDp
+    PanelSurface(Modifier.width(380.dp).heightIn(max = (screenH * 0.7f).dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Notifications", color = OnBar, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            if (items.any { it.clearable }) TextButton(onClick = onClearAll) { Text("Clear all", color = NeonMagenta) }
+        }
+        if (items.isEmpty()) Text("You're all caught up.", color = Muted, modifier = Modifier.padding(vertical = 16.dp))
+        LazyColumn(Modifier.weight(1f, fill = false)) {
+            items(items, key = { it.key }) { n ->
+                val app = remember(n.packageName) { appFor(n.packageName) }
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp))
+                        .background(Muted.copy(alpha = 0.12f)).clickable { onOpen(n) }.padding(10.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    if (app != null) AppIcon(app, 28) else Spacer(Modifier.size(28.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Row {
+                            Text(app?.label ?: n.packageName, color = Muted, fontSize = 11.sp, maxLines = 1,
+                                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            Text(ago(n.postedAt), color = Muted, fontSize = 11.sp)
+                        }
+                        if (n.title.isNotBlank()) Text(n.title, color = OnBar, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (n.text.isNotBlank()) Text(n.text, color = OnBar.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (n.clearable) IconButton(onClick = { onDismiss(n) }, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Filled.Close, "Dismiss", tint = Muted, modifier = Modifier.size(16.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun ago(t: Long): String {
+    val m = (System.currentTimeMillis() - t) / 60_000
+    return when {
+        m < 1 -> "now"
+        m < 60 -> "${m}m"
+        m < 24 * 60 -> "${m / 60}h"
+        else -> "${m / (24 * 60)}d"
+    }
 }

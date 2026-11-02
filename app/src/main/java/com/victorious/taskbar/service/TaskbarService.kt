@@ -35,6 +35,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.victorious.taskbar.MainActivity
 import com.victorious.taskbar.Permissions
 import com.victorious.taskbar.data.*
+import com.victorious.taskbar.notify.TrayNotificationListener
 import com.victorious.taskbar.theme.FleetThemeClient
 import com.victorious.taskbar.theme.TaskbarTheme
 import com.victorious.taskbar.ui.*
@@ -158,6 +159,10 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
             var appsVersion by remember { mutableIntStateOf(0) }
             var recent by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
             var battery by remember { mutableStateOf(controls.battery()) }
+            val notifs by TrayNotificationListener.items.collectAsState()
+            val notifPkgs = remember(notifs) { notifs.map { it.packageName }.distinct() }
+            val notifApps = remember(notifPkgs, appsVersion) { notifPkgs.take(3).mapNotNull { repo.entryFor(it) } }
+            LaunchedEffect(Unit) { TrayNotificationListener.ensureBound(this@TaskbarService) }
             val pinnedPkgs by store.pinned.collectAsState(initial = emptyList())
             val pinned = remember(pinnedPkgs, appsVersion) { pinnedPkgs.mapNotNull { repo.entryFor(it) } }
 
@@ -215,7 +220,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                 return@TaskbarTheme
             }
             val popupContent: @Composable () -> Unit = {
-                Box(contentAlignment = if (current is Popup.Quick) Alignment.BottomEnd else Alignment.BottomStart) {
+                Box(contentAlignment = if (current is Popup.Quick || current is Popup.Notifications) Alignment.BottomEnd else Alignment.BottomStart) {
                     when (val p = current) {
                         Popup.Start -> StartMenu(
                             apps = allApps, pinned = pinned,
@@ -259,6 +264,17 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                                 },
                             )
                         }
+                        Popup.Notifications -> NotificationPanel(
+                            items = notifs,
+                            appFor = { repo.entryFor(it) },
+                            onOpen = { n ->
+                                closePopup()
+                                if (!TrayNotificationListener.open(n)) repo.launch(n.packageName)
+                                if (n.clearable) TrayNotificationListener.dismiss(n.key)
+                            },
+                            onDismiss = { TrayNotificationListener.dismiss(it.key) },
+                            onClearAll = { TrayNotificationListener.dismissAll(); closePopup() },
+                        )
                         Popup.None -> {}
                     }
                 }
@@ -267,6 +283,9 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                 if (!top) PopupHost(current != Popup.None, top = false, popupContent)
                 TaskbarBar(
                     prefs = prefs, pinned = pinned, recent = recent, popup = current, battery = battery,
+                    notifApps = notifApps, notifCount = notifs.size,
+                    unreadPkgs = if (prefs.showNotifications) notifPkgs.toSet() else emptySet(),
+                    onNotifications = { popup.value = if (current == Popup.Notifications) Popup.None else Popup.Notifications },
                     onStart = { popup.value = if (current == Popup.Start) Popup.None else Popup.Start },
                     onHome = withClose { repo.goHome() },
                     onLaunch = { launch(it) },

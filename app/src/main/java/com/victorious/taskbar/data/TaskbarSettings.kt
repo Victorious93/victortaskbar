@@ -34,6 +34,7 @@ data class TaskbarPrefs(
     val defaultLaunch: LaunchMode = LaunchMode.NORMAL,
     val startOnBoot: Boolean = false,
     val haptics: Boolean = true,
+    val showNotifications: Boolean = true,
 )
 
 class TaskbarSettings(private val context: Context) {
@@ -50,6 +51,7 @@ class TaskbarSettings(private val context: Context) {
         val defaultLaunch = stringPreferencesKey("default_launch")
         val startOnBoot = booleanPreferencesKey("start_on_boot")
         val haptics = booleanPreferencesKey("haptics")
+        val showNotifications = booleanPreferencesKey("show_notifications")
     }
 
     private inline fun <reified E : Enum<E>> Preferences.enum(k: Preferences.Key<String>, def: E): E =
@@ -72,6 +74,7 @@ class TaskbarSettings(private val context: Context) {
             defaultLaunch = p.enum(K.defaultLaunch, d.defaultLaunch),
             startOnBoot = p[K.startOnBoot] ?: d.startOnBoot,
             haptics = p[K.haptics] ?: d.haptics,
+            showNotifications = p[K.showNotifications] ?: d.showNotifications,
         )
     }
 
@@ -91,5 +94,6 @@ class TaskbarSettings(private val context: Context) {
         p[K.defaultLaunch] = n.defaultLaunch.name
         p[K.startOnBoot] = n.startOnBoot
         p[K.haptics] = n.haptics
+        p[K.showNotifications] = n.showNotifications
     }
 }

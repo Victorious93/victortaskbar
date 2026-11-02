@@ -16,7 +16,7 @@
 
 ## Phase 3 — Tray
 - [x] Quick panel: Internet/Bluetooth panels, torch, volume, media keys, display/battery shortcuts (brightness slider not done: needs WRITE_SETTINGS)
-- [ ] Notification icons via NotificationListenerService (own consent screen)
+- [x] Notification icons via NotificationListenerService (own consent step): tray chip with count, unread dots, list with open/dismiss/clear all
 
 ## Phase 4 — Power features
 - [ ] Optional Shizuku integration for privileged actions
