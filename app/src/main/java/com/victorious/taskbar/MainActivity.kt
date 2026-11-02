@@ -137,8 +137,8 @@ class MainActivity : ComponentActivity() {
                 Segmented(BarPosition.entries, prefs.position, { if (it == BarPosition.BOTTOM) "Bottom" else "Top" }) { v -> update { it.copy(position = v) } }
                 Label("Size")
                 Segmented(BarSize.entries, prefs.size, { it.label }) { v -> update { it.copy(size = v) } }
-                Label("Bar opacity  ${(prefs.opacity * 100).toInt()}%")
-                Slider(prefs.opacity, { v -> update { it.copy(opacity = v) } }, valueRange = 0.4f..1f)
+                Label("Bar opacity")
+                SavedSlider(prefs.opacity, 0.4f..1f, 0) { v -> update { it.copy(opacity = v) } }
                 Toggle("Grid start menu", "Off = A–Z list with package names", prefs.menuGrid) { v -> update { it.copy(menuGrid = v) } }
             }
 
@@ -150,8 +150,8 @@ class MainActivity : ComponentActivity() {
             }
 
             Card("Behaviour") {
-                Label("Recent apps on bar  ${prefs.recentCount}")
-                Slider(prefs.recentCount.toFloat(), { v -> update { it.copy(recentCount = v.toInt()) } }, valueRange = 0f..12f, steps = 11)
+                Label("Recent apps on bar")
+                SavedSlider(prefs.recentCount.toFloat(), 0f..12f, 11, percent = false) { v -> update { it.copy(recentCount = v.toInt()) } }
                 Label("Tapping an app opens it in")
                 Segmented(LaunchMode.entries, prefs.defaultLaunch, { it.label }) { v -> update { it.copy(defaultLaunch = v) } }
                 if (prefs.defaultLaunch == LaunchMode.WINDOW) Text(
@@ -187,6 +187,20 @@ class MainActivity : ComponentActivity() {
         ) {
             Text(title, color = NeonMagenta, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             content()
+        }
+    }
+
+    /** Slider that only writes to DataStore when the finger lifts, so dragging stays smooth. */
+    @Composable
+    private fun SavedSlider(
+        saved: Float, range: ClosedFloatingPointRange<Float>, steps: Int, percent: Boolean = true, onCommit: (Float) -> Unit,
+    ) {
+        var local by remember(saved) { mutableFloatStateOf(saved) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(local, { local = it }, Modifier.weight(1f), valueRange = range, steps = steps,
+                onValueChangeFinished = { onCommit(local) })
+            Text(if (percent) "${(local * 100).toInt()}%" else "${local.toInt()}", color = NeonCyan,
+                modifier = Modifier.width(48.dp).padding(start = 8.dp))
         }
     }
 

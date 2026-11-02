@@ -118,7 +118,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
 
     private fun relayout() {
         val r = root ?: return
-        try { wm.updateViewLayout(r, params(focusable = popup.value == Popup.Start, collapsed = collapsed.value)) } catch (_: Exception) {}
+        try { wm.updateViewLayout(r, params(focusable = popup.value != Popup.None, collapsed = collapsed.value)) } catch (_: Exception) {}
     }
 
     private fun closePopup() { popup.value = Popup.None }
@@ -177,6 +177,19 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                 }
                 if (current == Popup.Quick) battery = controls.battery()
                 relayout()
+            }
+            DisposableEffect(Unit) {
+                val la = getSystemService(android.content.pm.LauncherApps::class.java)
+                val bump = { appsVersion++ }
+                val cb = object : android.content.pm.LauncherApps.Callback() {
+                    override fun onPackageRemoved(p: String?, u: android.os.UserHandle?) { bump() }
+                    override fun onPackageAdded(p: String?, u: android.os.UserHandle?) { bump() }
+                    override fun onPackageChanged(p: String?, u: android.os.UserHandle?) { bump() }
+                    override fun onPackagesAvailable(p: Array<out String>?, u: android.os.UserHandle?, r: Boolean) { bump() }
+                    override fun onPackagesUnavailable(p: Array<out String>?, u: android.os.UserHandle?, r: Boolean) { bump() }
+                }
+                la.registerCallback(cb, android.os.Handler(android.os.Looper.getMainLooper()))
+                onDispose { la.unregisterCallback(cb) }
             }
             LaunchedEffect(appsVersion) {
                 if (appsVersion > 0) {
@@ -243,7 +256,6 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                                 onInfo = withClose { repo.openAppInfo(pkg) },
                                 onUninstall = withClose {
                                     if (!repo.uninstall(pkg)) toast("Couldn't start uninstall")
-                                    lifecycleScope.launch { delay(4000); appsVersion++ }
                                 },
                             )
                         }
