@@ -65,6 +65,9 @@ import com.victorious.taskbar.data.IconCache
 import com.victorious.taskbar.data.TaskbarLogic
 import com.victorious.taskbar.data.TaskbarPrefs
 import com.victorious.taskbar.notify.TrayNotification
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.victorious.taskbar.service.SystemActionsService as SAS
+import com.victorious.taskbar.service.SystemActionsService.Action as SA
 import com.victorious.taskbar.theme.LocalFleetPalette
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -117,6 +120,9 @@ fun TaskbarBar(
     onCollapse: () -> Unit,
     onNotifications: () -> Unit,
     onMovePinned: (AppEntry, Int) -> Unit = { _, _ -> },
+    systemButtons: Boolean = false,
+    onBack: () -> Unit = {},
+    onRecents: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
     val size = prefs.size
@@ -153,7 +159,9 @@ fun TaskbarBar(
                 contentDescription = "Start menu", tint = Color.Black, modifier = Modifier.size((size.iconDp * 0.6f).dp),
             )
         }
+        if (systemButtons) BarIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", size.iconDp, onBack)
         BarIconButton(Icons.Filled.Home, "Home", size.iconDp, onHome)
+        if (systemButtons) BarIconButton(Icons.Filled.ViewCarousel, "Recent apps", size.iconDp, onRecents)
         Spacer(Modifier.width(4.dp))
         Row(
             Modifier.weight(1f).horizontalScroll(rememberScrollState()),
@@ -565,6 +573,8 @@ data class QuickActions(
     val onSettings: () -> Unit,
     val onTaskbarSettings: () -> Unit,
     val onStopTaskbar: () -> Unit,
+    val systemActions: Boolean = false,
+    val onSystem: (com.victorious.taskbar.service.SystemActionsService.Action) -> Unit = {},
 )
 
 @Composable
@@ -593,6 +603,15 @@ fun QuickPanel(battery: BatteryInfo, torchOn: Boolean, hasTorch: Boolean, a: Qui
             Tile("Display", Icons.Filled.Brightness6, false, Modifier.weight(1f), a.onDisplay)
             Tile("Battery", Icons.Filled.BatteryFull, false, Modifier.weight(1f), a.onBattery)
             Tile("Settings", Icons.Filled.Settings, false, Modifier.weight(1f), a.onSettings)
+        }
+        if (a.systemActions) {
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Tile("Shade", Icons.Filled.Notifications, false, Modifier.weight(1f), { a.onSystem(SA.NOTIFICATIONS) })
+                Tile("Lock", Icons.Filled.Lock, false, Modifier.weight(1f), { a.onSystem(SA.LOCK) }, enabled = SAS.supported(SA.LOCK))
+                Tile("Screenshot", Icons.Filled.Screenshot, false, Modifier.weight(1f), { a.onSystem(SA.SCREENSHOT) }, enabled = SAS.supported(SA.SCREENSHOT))
+                Tile("Power", Icons.Filled.PowerSettingsNew, false, Modifier.weight(1f), { a.onSystem(SA.POWER) })
+            }
         }
         Spacer(Modifier.height(12.dp))
         SectionLabel("Sound")

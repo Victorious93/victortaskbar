@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
         var overlayOk by remember { mutableStateOf(Permissions.canDrawOverlays(this)) }
         var usageOk by remember { mutableStateOf(Permissions.hasUsageAccess(this)) }
         var notifOk by remember { mutableStateOf(TrayNotificationListener.hasAccess(this)) }
+        var sysOk by remember { mutableStateOf(com.victorious.taskbar.service.SystemActionsService.isEnabled(this)) }
         val running by TaskbarService.running.collectAsState()
         val prefs by settings.prefs.collectAsState(initial = TaskbarPrefs())
         val theme by FleetThemeClient.state.collectAsState()
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     overlayOk = Permissions.canDrawOverlays(this@MainActivity)
                     usageOk = Permissions.hasUsageAccess(this@MainActivity)
                     notifOk = TrayNotificationListener.hasAccess(this@MainActivity)
+                    sysOk = com.victorious.taskbar.service.SystemActionsService.isEnabled(this@MainActivity)
                 }
             }
             owner.lifecycle.addObserver(obs)
@@ -148,6 +150,17 @@ class MainActivity : ComponentActivity() {
                 Label("Bar opacity")
                 SavedSlider(prefs.opacity, 0.4f..1f, 0) { v -> update { it.copy(opacity = v) } }
                 Toggle("Grid start menu", "Off = A–Z list with package names", prefs.menuGrid) { v -> update { it.copy(menuGrid = v) } }
+            }
+
+            Card("System buttons (optional)") {
+                Text(
+                    "Adds Back and Recent apps to the bar, plus Notification shade, Lock, Screenshot and Power menu " +
+                        "in the quick panel. Android only allows this through an accessibility service. VictorTaskbar's " +
+                        "is set up to see NO screen content and NO typing; it only presses those buttons when you tap them.",
+                    color = Muted, fontSize = 12.sp,
+                )
+                Step("VictorTaskbar system buttons", if (sysOk) "On" else "Off — enable it in Accessibility settings",
+                    sysOk, "Open") { startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
             }
 
             Card("Accessibility") {

@@ -16,6 +16,7 @@ Status: v0.2.0. Not yet tested on a physical device.
 - Quick panel (tap the clock): Internet & Bluetooth panels, torch, volume/mute, media controls, battery temp
 - Bar: top or bottom, 3 sizes, opacity, hide to a small handle, Home button, battery gauge, 12/24h clock with optional seconds/date
 - Back or tapping outside closes menus; notification has Show/hide and Stop
+- Optional system buttons: Back + Recent apps on the bar; shade, lock, screenshot, power menu in the quick panel
 - Optional start on boot
 - Home-screen widget (3x1) showing On/Off with a Start/Stop button
 
@@ -52,7 +53,7 @@ signature and installs over the previous one. **This is a debug key only.** No r
 | Notification access (`BIND_NOTIFICATION_LISTENER_SERVICE`) | Optional notification icons and list | You enable it in Android's Notification access settings from the Setup card; read on-device only |
 | `RECEIVE_BOOT_COMPLETED` | Optional "Start on boot" | Install-time; does nothing unless you turn the setting on |
 
-No accessibility service is used.
+An **optional** accessibility service ("VictorTaskbar system buttons") adds Back/Recents/shade/lock/screenshot/power buttons. It is off until you enable it, is configured with `canRetrieveWindowContent=false`, and ignores all events.
 
 ## Victorious fleet
 

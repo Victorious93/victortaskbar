@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">VictorTaskbar</string>
     <string name="widget_desc">Start or stop the taskbar from your home screen</string>
+    <string name="a11y_desc">Lets VictorTaskbar press Back, Recent apps, open the notification shade, lock the screen and take screenshots when you tap its buttons. It cannot see screen content or what you type, and does nothing until you tap a taskbar button.</string>
+    <string name="a11y_label">VictorTaskbar system buttons</string>
 </resources>

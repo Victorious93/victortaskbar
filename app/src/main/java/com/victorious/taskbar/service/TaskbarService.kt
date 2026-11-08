@@ -162,6 +162,15 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
             var appsVersion by remember { mutableIntStateOf(0) }
             var recent by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
             var battery by remember { mutableStateOf(controls.battery()) }
+            val sysOn by SystemActionsService.connected.collectAsState()
+            fun system(a: SystemActionsService.Action) {
+                // Close our popup first so e.g. a screenshot doesn't capture the panel.
+                closePopup()
+                lifecycleScope.launch {
+                    delay(if (a == SystemActionsService.Action.SCREENSHOT) 350 else 0)
+                    if (!SystemActionsService.perform(a)) Toast.makeText(this@TaskbarService, "Turn on \"VictorTaskbar system buttons\" in settings", Toast.LENGTH_SHORT).show()
+                }
+            }
             val notifs by TrayNotificationListener.items.collectAsState()
             val notifPkgs = remember(notifs) { notifs.map { it.packageName }.distinct() }
             val notifApps = remember(notifPkgs, appsVersion) { notifPkgs.take(3).mapNotNull { repo.entryFor(it) } }
@@ -249,6 +258,8 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                             onSettings = withClose { repo.start(Intent(Settings.ACTION_SETTINGS)) },
                             onTaskbarSettings = ::openSettings,
                             onStopTaskbar = { stopSelf() },
+                            systemActions = sysOn,
+                            onSystem = { system(it) },
                         ))
                         is Popup.AppMenu -> {
                             val pkg = p.app.packageName
@@ -288,6 +299,9 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                     prefs = prefs, pinned = pinned, recent = recent, popup = current, battery = battery,
                     notifApps = notifApps, notifCount = notifs.size,
                     unreadPkgs = if (prefs.showNotifications) notifPkgs.toSet() else emptySet(),
+                    systemButtons = sysOn,
+                    onBack = { system(SystemActionsService.Action.BACK) },
+                    onRecents = { system(SystemActionsService.Action.RECENTS) },
                     onMovePinned = { app, steps -> lifecycleScope.launch { store.move(app.packageName, steps) } },
                     onNotifications = { popup.value = if (current == Popup.Notifications) Popup.None else Popup.Notifications },
                     onStart = { popup.value = if (current == Popup.Start) Popup.None else Popup.Start },
