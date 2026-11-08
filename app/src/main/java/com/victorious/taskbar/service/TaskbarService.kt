@@ -67,14 +67,17 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
         controls = DeviceControls(this).also { it.start() }
         FleetThemeClient.start(this)
         running.value = true
+        TaskbarWidget.refresh(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent?.action == ACTION_STOP || !Permissions.canDrawOverlays(this)) {
+        // Started via startForegroundService (widget): must call startForeground before stopping.
+        startInForeground()
+        val toggleOff = intent?.action == ACTION_TOGGLE_RUNNING && root != null
+        if (intent?.action == ACTION_STOP || toggleOff || !Permissions.canDrawOverlays(this)) {
             stopSelf(); return START_NOT_STICKY
         }
-        startInForeground()
         if (intent?.action == ACTION_TOGGLE_COLLAPSE) collapsed.value = !collapsed.value
         if (root == null) addOverlay()
         return START_STICKY
@@ -303,6 +306,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
 
     override fun onDestroy() {
         running.value = false
+        TaskbarWidget.refresh(this)
         controls.stop()
         root?.let { try { wm.removeView(it) } catch (_: Exception) {} }
         root = null
@@ -312,6 +316,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
     companion object {
         const val CHANNEL = "taskbar"
         const val ACTION_STOP = "com.victorious.taskbar.STOP"
+        const val ACTION_TOGGLE_RUNNING = "com.victorious.taskbar.TOGGLE_RUNNING"
         const val ACTION_TOGGLE_COLLAPSE = "com.victorious.taskbar.TOGGLE_COLLAPSE"
         /** True while the service is alive; observed by the settings screen. */
         val running = MutableStateFlow(false)

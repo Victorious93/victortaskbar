@@ -1,1 +1,4 @@
-<resources><string name="app_name">VictorTaskbar</string></resources>
+<resources>
+    <string name="app_name">VictorTaskbar</string>
+    <string name="widget_desc">Start or stop the taskbar from your home screen</string>
+</resources>

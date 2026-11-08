@@ -17,6 +17,7 @@ Status: v0.2.0. Not yet tested on a physical device.
 - Bar: top or bottom, 3 sizes, opacity, hide to a small handle, Home button, battery gauge, 12/24h clock with optional seconds/date
 - Back or tapping outside closes menus; notification has Show/hide and Stop
 - Optional start on boot
+- Home-screen widget (3x1) showing On/Off with a Start/Stop button
 
  See [ROADMAP.md](ROADMAP.md) and [MANUAL.md](MANUAL.md).
 
