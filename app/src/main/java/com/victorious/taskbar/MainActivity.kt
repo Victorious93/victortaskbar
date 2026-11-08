@@ -175,6 +175,8 @@ class MainActivity : ComponentActivity() {
 
             Card("How to use") {
                 Tip("☰ Start", "Search apps (fuzzy: \"gm\" finds Google Maps). Enter opens the top result.")
+                Tip("Swipe up on the bar", "Opens the start menu (swipe down if the bar is at the top).")
+                Tip("Long-press + drag a pinned icon", "Drag sideways to reorder; release without moving for the app menu.")
                 Tip("Long-press any app", "Pin/unpin, reorder, split screen, floating window, app info, uninstall.")
                 Tip("Tap the clock", "Quick panel: Wi-Fi/Internet, Bluetooth, torch, volume, media controls.")
                 Tip("Notification chip", "Tap the icons + count next to the clock to read, open or dismiss notifications.")

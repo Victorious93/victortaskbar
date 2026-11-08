@@ -285,6 +285,7 @@ class TaskbarService : LifecycleService(), SavedStateRegistryOwner {
                     prefs = prefs, pinned = pinned, recent = recent, popup = current, battery = battery,
                     notifApps = notifApps, notifCount = notifs.size,
                     unreadPkgs = if (prefs.showNotifications) notifPkgs.toSet() else emptySet(),
+                    onMovePinned = { app, steps -> lifecycleScope.launch { store.move(app.packageName, steps) } },
                     onNotifications = { popup.value = if (current == Popup.Notifications) Popup.None else Popup.Notifications },
                     onStart = { popup.value = if (current == Popup.Start) Popup.None else Popup.Start },
                     onHome = withClose { repo.goHome() },

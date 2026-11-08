@@ -32,6 +32,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.zIndex
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -105,6 +116,7 @@ fun TaskbarBar(
     onTray: () -> Unit,
     onCollapse: () -> Unit,
     onNotifications: () -> Unit,
+    onMovePinned: (AppEntry, Int) -> Unit = { _, _ -> },
 ) {
     val haptic = LocalHapticFeedback.current
     val size = prefs.size
@@ -113,6 +125,19 @@ fun TaskbarBar(
     Row(
         Modifier.fillMaxWidth().height(size.heightDp.dp)
             .clip(shape).background(BarBg.copy(alpha = prefs.opacity))
+            // Swipe from the bar toward the middle of the screen opens the start menu.
+            .pointerInput(prefs.position) {
+                var acc = 0f
+                val threshold = 24.dp.toPx()
+                detectVerticalDragGestures(
+                    onDragStart = { acc = 0f },
+                    onVerticalDrag = { c, d -> acc += d; c.consume() },
+                    onDragEnd = {
+                        val toward = if (prefs.position == BarPosition.BOTTOM) -acc else acc
+                        if (toward > threshold && popup != Popup.Start) onStart()
+                    },
+                )
+            }
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -136,10 +161,13 @@ fun TaskbarBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             pinned.forEach { app ->
-                BarApp(app, size.iconDp, highlighted = (popup as? Popup.AppMenu)?.app?.packageName == app.packageName,
-                    unread = app.packageName in unreadPkgs,
-                    onClick = { onLaunch(app) },
-                    onLongClick = { if (prefs.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAppMenu(app) })
+                key(app.packageName) {
+                    BarApp(app, size.iconDp, highlighted = (popup as? Popup.AppMenu)?.app?.packageName == app.packageName,
+                        unread = app.packageName in unreadPkgs, haptics = prefs.haptics,
+                        onClick = { onLaunch(app) },
+                        onLongClick = { onAppMenu(app) },
+                        onMove = { steps -> onMovePinned(app, steps) })
+                }
             }
             val extra = recent.filter { r -> pinned.none { it.packageName == r.packageName } }
             if (pinned.isNotEmpty() && extra.isNotEmpty()) {
@@ -147,8 +175,9 @@ fun TaskbarBar(
             }
             extra.forEach { app ->
                 BarApp(app, size.iconDp - 4, highlighted = false, dim = true, unread = app.packageName in unreadPkgs,
+                    haptics = prefs.haptics,
                     onClick = { onLaunch(app) },
-                    onLongClick = { if (prefs.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress); onAppMenu(app) })
+                    onLongClick = { onAppMenu(app) })
             }
             if (pinned.isEmpty() && extra.isEmpty()) {
                 Text("Long-press an app in the start menu to pin it", color = Muted, fontSize = 12.sp, maxLines = 1)
@@ -173,13 +202,50 @@ private fun BarIconButton(icon: ImageVector, desc: String, iconDp: Int, onClick:
     ) { Icon(icon, desc, tint = OnBar, modifier = Modifier.size((iconDp * 0.7f).dp)) }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+/**
+ * Tap = launch. Long-press and release = app menu. Long-press and drag sideways = reorder
+ * (only when [onMove] is set, i.e. pinned apps). One gesture handler so a touch never does two things.
+ */
 @Composable
-private fun BarApp(app: AppEntry, iconDp: Int, highlighted: Boolean, dim: Boolean = false, unread: Boolean = false, onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun BarApp(
+    app: AppEntry, iconDp: Int, highlighted: Boolean, dim: Boolean = false, unread: Boolean = false,
+    haptics: Boolean = true, onClick: () -> Unit, onLongClick: () -> Unit, onMove: ((Int) -> Unit)? = null,
+) {
+    val haptic = LocalHapticFeedback.current
+    var dragX by remember { mutableFloatStateOf(0f) }
+    var lifted by remember { mutableStateOf(false) }
+    val click by rememberUpdatedState(onClick)
+    val long by rememberUpdatedState(onLongClick)
+    val move by rememberUpdatedState(onMove)
     Box(
-        Modifier.clip(RoundedCornerShape(10.dp))
-            .background(if (highlighted) NeonCyan.copy(alpha = 0.18f) else Color.Transparent)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        Modifier
+            .graphicsLayer { translationX = dragX; scaleX = if (lifted) 1.15f else 1f; scaleY = scaleX }
+            .zIndex(if (lifted) 1f else 0f)
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (highlighted || lifted) NeonCyan.copy(alpha = 0.18f) else Color.Transparent)
+            .pointerInput(app.packageName, iconDp, haptics) {
+                val slot = (iconDp + 12).dp.toPx() // icon + 2x4dp padding + 4dp spacing
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var cancelled = false
+                    val released = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                        if (waitForUpOrCancellation() == null) cancelled = true
+                        true
+                    }
+                    if (released != null) { if (!cancelled) click(); return@awaitEachGesture }
+                    if (haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    lifted = true
+                    var acc = 0f
+                    drag(down.id) { c -> acc += c.positionChange().x; c.consume(); if (move != null) dragX = acc }
+                    lifted = false
+                    dragX = 0f
+                    val steps = (acc / slot).roundToInt()
+                    when {
+                        move != null && steps != 0 -> move?.invoke(steps)
+                        abs(acc) < viewConfiguration.touchSlop -> long()
+                    }
+                }
+            }
             .padding(4.dp),
         contentAlignment = Alignment.Center,
     ) {
