@@ -150,6 +150,16 @@ class MainActivity : ComponentActivity() {
                 Toggle("Grid start menu", "Off = A–Z list with package names", prefs.menuGrid) { v -> update { it.copy(menuGrid = v) } }
             }
 
+            Card("Accessibility") {
+                Label("Text size (on top of Android's font size)")
+                Segmented(listOf(1f, 1.15f, 1.3f), prefs.textScale, { when (it) { 1f -> "Normal"; 1.15f -> "Large"; else -> "Huge" } }) { v ->
+                    update { it.copy(textScale = v) }
+                }
+                Toggle("High contrast", "Solid black (or white) bar and panels, brighter text; ignores opacity", prefs.highContrast) { v ->
+                    update { it.copy(highContrast = v) }
+                }
+            }
+
             Card("Clock & tray") {
                 Toggle("24-hour clock", null, prefs.use24h) { v -> update { it.copy(use24h = v) } }
                 Toggle("Show seconds", null, prefs.showSeconds) { v -> update { it.copy(showSeconds = v) } }

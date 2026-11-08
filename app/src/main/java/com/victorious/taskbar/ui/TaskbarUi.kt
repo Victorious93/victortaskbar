@@ -124,7 +124,7 @@ fun TaskbarBar(
     else RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
     Row(
         Modifier.fillMaxWidth().height(size.heightDp.dp)
-            .clip(shape).background(BarBg.copy(alpha = prefs.opacity))
+            .clip(shape).background(BarBg.copy(alpha = if (prefs.highContrast) 1f else prefs.opacity))
             // Swipe from the bar toward the middle of the screen opens the start menu.
             .pointerInput(prefs.position) {
                 var acc = 0f

@@ -35,6 +35,8 @@ data class TaskbarPrefs(
     val startOnBoot: Boolean = false,
     val haptics: Boolean = true,
     val showNotifications: Boolean = true,
+    val textScale: Float = 1f,
+    val highContrast: Boolean = false,
 )
 
 class TaskbarSettings(private val context: Context) {
@@ -52,6 +54,8 @@ class TaskbarSettings(private val context: Context) {
         val startOnBoot = booleanPreferencesKey("start_on_boot")
         val haptics = booleanPreferencesKey("haptics")
         val showNotifications = booleanPreferencesKey("show_notifications")
+        val textScale = floatPreferencesKey("text_scale")
+        val highContrast = booleanPreferencesKey("high_contrast")
     }
 
     private inline fun <reified E : Enum<E>> Preferences.enum(k: Preferences.Key<String>, def: E): E =
@@ -75,6 +79,8 @@ class TaskbarSettings(private val context: Context) {
             startOnBoot = p[K.startOnBoot] ?: d.startOnBoot,
             haptics = p[K.haptics] ?: d.haptics,
             showNotifications = p[K.showNotifications] ?: d.showNotifications,
+            textScale = (p[K.textScale] ?: d.textScale).coerceIn(1f, 1.5f),
+            highContrast = p[K.highContrast] ?: d.highContrast,
         )
     }
 
@@ -95,5 +101,7 @@ class TaskbarSettings(private val context: Context) {
         p[K.startOnBoot] = n.startOnBoot
         p[K.haptics] = n.haptics
         p[K.showNotifications] = n.showNotifications
+        p[K.textScale] = n.textScale
+        p[K.highContrast] = n.highContrast
     }
 }
