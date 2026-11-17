@@ -1,59 +1,76 @@
-<p align="center">
-  <img src="assets/logo/victortaskbar-logo.png" alt="VictorTaskbar logo" width="220">
-</p>
+<div align="center">
+
+<img src="docs/assets/banner.png" alt="VictorTaskbar — Part of the Victorious Framework fleet" width="1280" />
 
 # VictorTaskbar
 
-A desktop-style taskbar for Android: a bar along the bottom of the screen, drawn over other apps,
-with a start menu, pinned apps, recent apps, a clock and a battery indicator.
+**A desktop-style taskbar for Android**
 
-Status: MVP scaffold (v0.1.0). See [ROADMAP.md](ROADMAP.md) and [MANUAL.md](MANUAL.md).
+Works on its own; fleet integration (droidcommand-AI) is optional
 
-## Tech
-- Kotlin + Jetpack Compose, package `com.victorious.taskbar`
-- minSdk 24, compileSdk/targetSdk 36
-- Gradle Kotlin DSL with version catalog (`gradle/libs.versions.toml`), Gradle wrapper 8.14.3, AGP 8.13
-- ABIs: `arm64-v8a`, `armeabi-v7a`; APK signing v2 + v3
+<p>
+  <a href="https://github.com/Victorious93/victortaskbar/releases/tag/v0.1.0-debug"><img src="https://img.shields.io/github/v/release/Victorious93/victortaskbar?include_prereleases&style=flat-square&label=Release&labelColor=0B0F1A&color=00E5FF" alt="Latest release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-All_rights_reserved-FF2BD6?style=flat-square&labelColor=0B0F1A" alt="License" /></a>
+  <a href="https://github.com/Victorious93/victortaskbar/actions/workflows/android.yml"><img src="https://img.shields.io/github/actions/workflow/status/Victorious93/victortaskbar/android.yml?style=flat-square&label=CI&labelColor=0B0F1A&color=00E5FF" alt="CI" /></a>
+  <a href="https://victorious-framework.pages.dev"><img src="https://img.shields.io/badge/Fleet-Victorious_Framework-FF2BD6?style=flat-square&labelColor=0B0F1A" alt="Victorious Framework fleet" /></a>
+</p>
 
-## Build
-Requires JDK 17+ and the Android SDK (platform 36).
+</div>
+
+## Features
+
+- Overlay taskbar along the bottom of the screen, drawn over other apps by a foreground service
+- Start menu with app search; pin and unpin apps (stored in DataStore)
+- Recent apps via UsageStatsManager (optional usage-access permission)
+- Tray: clock and battery indicator
+- Consent screens for overlay and usage access before those permissions are requested
+- Read-only FleetThemeClient for VictorLaunch's shared theme, with a built-in neon fallback
+- Kotlin + Jetpack Compose, package `com.victorious.taskbar` (minSdk 24, compileSdk/targetSdk 36)
+
+Status: MVP scaffold (v0.1.0). Planned work is in [ROADMAP.md](ROADMAP.md) and is not in this build: freeform and split-screen windowing, quick toggles, notification icons, optional Shizuku, and an accessibility service only if it is strictly needed. No accessibility service is used in this build.
+
+## Screenshots
+
+No screenshots of the running app are in the repo yet.
+
+## Install / download
+
+This is a **debug pre-release**, not finished software. Install only if you understand the risk.
+
+There is no stable GitHub Release yet. GitHub's `/releases/latest` link does not resolve, because the only published release is marked as a pre-release.
+
+- Pre-release: [v0.1.0-debug](https://github.com/Victorious93/victortaskbar/releases/tag/v0.1.0-debug)
+- APK: [app-debug.apk](https://github.com/Victorious93/victortaskbar/releases/download/v0.1.0-debug/app-debug.apk) from tag `v0.1.0-debug` (`arm64-v8a` and `armeabi-v7a`, about 11.8 MB)
+
+## Build from source
+
+Requires JDK 17+ and the Android SDK (platform 36). Gradle wrapper 8.14.3, AGP 8.13.2.
+
 ```
 ./gradlew assembleDebug
 # APK: app/build/outputs/apk/debug/app-debug.apk
 ```
-CI (`.github/workflows/android.yml`) builds the debug APK on every push/PR and uploads it as an artifact.
 
-### Signing
-Debug builds are signed with the committed `app/debug.keystore`
-(store/key password `android`, alias `androiddebugkey`) so every build, local or CI, has the same
-signature and installs over the previous one. **This is a debug key only.** No release keys are in this repo.
+CI (`.github/workflows/android.yml`) builds the debug APK on every push and pull request and uploads it as the `victortaskbar-debug-apk` artifact.
 
-## Permissions and consent
-| Permission | Why | How it's granted |
-|---|---|---|
-| `SYSTEM_ALERT_WINDOW` | Draw the taskbar over other apps | Only after the in-app consent screen explains it; the button opens Android's overlay settings |
-| `PACKAGE_USAGE_STATS` | Show recently used apps (optional) | Separate consent screen; the button opens Usage access settings. Data stays on device |
-| `FOREGROUND_SERVICE` (+ `SPECIAL_USE`) | Keep the taskbar alive | Automatic; shows an ongoing notification |
-| `POST_NOTIFICATIONS` | Show that ongoing notification on Android 13+ | Runtime prompt on Start |
-| `QUERY_ALL_PACKAGES` | List launchable apps in the start menu | Install-time |
+Debug builds use this repo's fixed debug keystore (`app/debug.keystore`) so every local or CI debug build has the same signature and can install over the previous one. This is a debug key only. Release keys are never committed.
 
-No accessibility service is used.
+## Manual
+
+How-to: [MANUAL.md](MANUAL.md)
+
+## License
+
+All rights reserved, Don Victor. See [LICENSE](LICENSE).
 
 ## Victorious fleet
 
+- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
 - Monorepo: [https://github.com/Victorious93/victorious-fleet](https://github.com/Victorious93/victorious-fleet) *(not yet a submodule)*
 - Status: [fleet-manifest ROADMAP](https://github.com/Victorious93/fleet-manifest/blob/main/ROADMAP.md)
-- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
 
-## License
-All rights reserved, Don Victor. See [LICENSE](LICENSE).
+Official logo files (unchanged): [assets/logo/victortaskbar-logo.png](assets/logo/victortaskbar-logo.png) and the ring-only icon at [assets/logo/victortaskbar-icon-ring.png](assets/logo/victortaskbar-icon-ring.png).
 
-## Fleet theme (VictorLaunch)
+### Fleet theme (VictorLaunch)
 
-VictorTaskbar is a **read-only** client of VictorLaunch's fleet theme (spec: victorlaunch `docs/specs/FLEET_THEME.md`).
-
-- On start it queries `content://com.victorious.launch.theme/current`, registers a `ContentObserver`, and listens for the explicit broadcast `com.victorious.launch.action.FLEET_THEME_CHANGED` (exported receiver; extras are ignored, it only triggers a re-query).
-- Before querying it verifies that the authority resolves to package `com.victorious.launch` **and** that the signer SHA-256 matches the pinned VictorLaunch cert (not just a signature permission).
-- `schemaVersion != 1`, a `SecurityException`, a failed pin, or bad data → built-in neon theme. The app never writes to the provider.
-- `palette.*` applies live to both the app and the overlay taskbar.
-- **Action for Don:** VictorLaunch must trust VictorTaskbar (add it to `FleetPins.KNOWN`) before the query will succeed; until then the app shows "built-in". VictorTaskbar debug cert SHA-256: `4F:58:A5:C5:75:93:5E:10:3B:1F:73:C0:7A:D2:E0:0A:FF:64:57:76:27:71:1B:77:96:79:37:D5:FC:3B:C2:92`.
+VictorTaskbar is a **read-only** client of VictorLaunch's fleet theme (spec: victorlaunch `docs/specs/FLEET_THEME.md`). On start it queries `content://com.victorious.launch.theme/current`, observes changes, and applies `palette.*` live to the app and the overlay. It never writes to the provider. If the provider is missing, the signer pin fails, `schemaVersion` is not 1, or the data is bad, it falls back to the built-in neon theme. Until VictorLaunch lists VictorTaskbar in `FleetPins.KNOWN`, the app stays on the built-in theme. Details and the debug certificate fingerprint are in [MANUAL.md](MANUAL.md).
