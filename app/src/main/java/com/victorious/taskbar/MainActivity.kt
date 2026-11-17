@@ -64,6 +64,12 @@ class MainActivity : ComponentActivity() {
                 else "Theme: built-in neon — ${theme.fallbackReason ?: "fleet theme unavailable"}",
                 color = Muted,
             )
+            val installMode = remember { InstallInfo.detect(this@MainActivity) }
+            Text(
+                "Install: ${installMode.label}" +
+                    if (installMode == InstallMode.PRIVILEGED) " — usage access granted by the system" else "",
+                color = Muted,
+            )
             ConsentCard(
                 title = "1. Display over other apps (required)",
                 body = "VictorTaskbar draws a taskbar at the bottom of your screen on top of other apps. " +

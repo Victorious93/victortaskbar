@@ -55,6 +55,10 @@ CI (`.github/workflows/android.yml`) builds the debug APK on every push and pull
 
 Debug builds use this repo's fixed debug keystore (`app/debug.keystore`) so every local or CI debug build has the same signature and can install over the previous one. This is a debug key only. Release keys are never committed.
 
+## Optional root module
+
+Rooted? An **optional** Magisk / KernelSU / APatch module installs VictorTaskbar as a privileged system app, so recent apps work without the manual usage-access toggle. It grants one privileged permission (`PACKAGE_USAGE_STATS`). You do not need it: the app works the same without root. CI builds it as the `victortaskbar-root-module` artifact. It has not been tested on a device yet; back up first. Details: [module/README.md](module/README.md).
+
 ## Manual
 
 How-to: [MANUAL.md](MANUAL.md)

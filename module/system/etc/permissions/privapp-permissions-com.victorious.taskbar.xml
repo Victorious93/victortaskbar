@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Privileged-permission allowlist for VictorTaskbar when the OPTIONAL root module installs it
+  as /system/priv-app/VictorTaskbar. Keep this list minimal.
+
+  Every permission here must be requested in app/src/main/AndroidManifest.xml, and every
+  privileged permission the manifest requests must be here: on devices with
+  ro.control_privapp_permissions=enforce, a priv-app that requests a privileged permission
+  missing from its allowlist can stop the device from booting.
+
+  - PACKAGE_USAGE_STATS: read UsageStatsManager for the taskbar's "recent apps"
+    (AppRepository.recentApps). As a priv-app it is granted at install, so the user does not
+    have to turn on Usage access by hand.
+
+  Deliberately NOT granted (see module/README.md): REAL_GET_TASKS (no code uses it yet),
+  MANAGE_ACTIVITY_TASKS (signature-only, cannot be granted to a priv-app).
+-->
+<permissions>
+    <privapp-permissions package="com.victorious.taskbar">
+        <permission name="android.permission.PACKAGE_USAGE_STATS" />
+    </privapp-permissions>
+</permissions>

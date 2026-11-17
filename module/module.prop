@@ -1,0 +1,6 @@
+id=victortaskbar_priv
+name=VictorTaskbar Privileged (optional)
+version=v0.1.0
+versionCode=1
+author=Don Victor / Victorious93
+description=OPTIONAL. Installs VictorTaskbar (com.victorious.taskbar) systemlessly as a privileged system app so recent apps work without the manual usage-access toggle. Magisk, KernelSU and APatch. The app works without this module.

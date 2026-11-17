@@ -12,3 +12,6 @@ build/
 # release keys must never be committed
 *.jks
 release.keystore
+
+# root module: the APK is added at build time, never committed
+/module/system/priv-app/VictorTaskbar/*.apk
