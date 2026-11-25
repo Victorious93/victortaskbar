@@ -63,18 +63,21 @@ Rooted? An **optional** Magisk / KernelSU / APatch module installs VictorTaskbar
 
 How-to: [MANUAL.md](MANUAL.md)
 
-## License
-
-All rights reserved, Don Victor. See [LICENSE](LICENSE).
-
 ## Victorious fleet
 
-- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
-- Monorepo: [https://github.com/Victorious93/victorious-fleet](https://github.com/Victorious93/victorious-fleet) *(not yet a submodule)*
-- Status: [fleet-manifest ROADMAP](https://github.com/Victorious93/fleet-manifest/blob/main/ROADMAP.md)
+VictorTaskbar is part of the [Victorious Framework](https://victorious-framework.pages.dev), a family of Android and PC tools by Don Victor. **It works standalone; fleet integrations are optional.** Related: [droidcommand-AI](https://github.com/Victorious93/droidcommand-AI), [victorlaunch](https://github.com/Victorious93/victorlaunch), [fleet-fdroid](https://github.com/Victorious93/fleet-fdroid). The roster is in [victorious-fleet](https://github.com/Victorious93/victorious-fleet) and live status is in [fleet-manifest](https://github.com/Victorious93/fleet-manifest).
 
 Official logo files (unchanged): [assets/logo/victortaskbar-logo.png](assets/logo/victortaskbar-logo.png) and the ring-only icon at [assets/logo/victortaskbar-icon-ring.png](assets/logo/victortaskbar-icon-ring.png).
 
 ### Fleet theme (VictorLaunch)
 
 VictorTaskbar is a **read-only** client of VictorLaunch's fleet theme (spec: victorlaunch `docs/specs/FLEET_THEME.md`). On start it queries `content://com.victorious.launch.theme/current`, observes changes, and applies `palette.*` live to the app and the overlay. It never writes to the provider. If the provider is missing, the signer pin fails, `schemaVersion` is not 1, or the data is bad, it falls back to the built-in neon theme. Until VictorLaunch lists VictorTaskbar in `FleetPins.KNOWN`, the app stays on the built-in theme. Details and the debug certificate fingerprint are in [MANUAL.md](MANUAL.md).
+
+
+## Contributing
+
+Issues and pull requests are welcome. Please describe what you changed and why, and keep documentation accurate to the code — do not invent features, builds, or test results.
+
+## License
+
+All rights reserved, Don Victor. See [LICENSE](LICENSE).
